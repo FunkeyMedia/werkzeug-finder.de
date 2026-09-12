@@ -259,7 +259,7 @@ const topics = [
   time: 6 + (i % 5),
 }));
 let fav = new Set(JSON.parse(localStorage.getItem("wf-favs") || "[]")),
-  shown = 8,
+  shown = 500,
   active = "Alle";
 let amazonState = {
   loading: false,
@@ -326,8 +326,8 @@ function productFeed(list) {
 }
 function home() {
   document.title = "Werkzeug Finder – Das richtige Werkzeug für dein Projekt";
-  return `<section class="hero"><div class="heroCopy"><span class="eyebrow">Klar auswählen. Besser arbeiten.</span><h1>Mach’s richtig. Von Anfang an.</h1><p>Ob Akkuschrauber, Bohrmaschine, Säge, Gartengerät oder Werkstattausstattung: Finde genau das Werkzeug, das zu deinem Projekt und deinem Können passt.</p><div class="actions"><a class="button accent" href="#finder">Werkzeug finden</a><a class="button ghost" style="color:white" href="#ratgeber">Erst informieren</a></div><div class="stats"><div class="stat"><b id="productStat">1.000</b>Produkte im erweiterten Katalog</div><div class="stat"><b>20</b>Ratgeber</div><div class="stat"><b>0</b>erfundene Bewertungen</div></div></div><div class="heroImage"><span class="caption">Eigene KI-Illustration · keine Produktabbildung</span></div></section>
-<section class="section" id="finder"><span class="eyebrow">Dein Werkzeug-Finder</span><h2>Was möchtest du anpacken?</h2><div class="finderPanel"><div class="needs">${["Alle", "Wohnung", "Haus", "Garten", "Werkstatt"].map((x) => `<button class="chip ${x === active ? "active" : ""}" data-use="${x}">${x}</button>`).join("")}</div><div class="chips" style="margin-top:12px">${["Alle Produkte", "Koffer", "Elektro"].map((x) => `<button class="chip" data-cat="${x}">${x}</button>`).join("")}</div><div class="toolbar"><input id="search" type="search" placeholder="Werkzeug, Gerät oder Marke suchen" aria-label="Produkte durchsuchen"><select id="brand"><option value="">Alle Marken</option>${[...new Set(products.map((p) => p.brand))].map((x) => `<option>${x}</option>`).join("")}</select><select id="sort"><option value="rec">Empfehlung</option><option value="low">Preis aufsteigend</option><option value="high">Preis absteigend</option></select></div><div class="notice" id="amazonStatus"><b>Amazon wird verbunden:</b> Aktuelle Produkte, Bilder, Preise und Verfügbarkeit werden sicher über die Amazon Creators API geladen.</div><div id="resultCount" class="meta"></div><div class="productGrid" id="produkte"></div><button class="load" id="loadMore">Weitere 100 Produkte laden</button></div></section>
+  return `<section class="hero"><div class="heroCopy"><span class="eyebrow">Klar auswählen. Besser arbeiten.</span><h1>Mach’s richtig. Von Anfang an.</h1><p>Ob Akkuschrauber, Bohrmaschine, Säge, Gartengerät oder Werkstattausstattung: Finde genau das Werkzeug, das zu deinem Projekt und deinem Können passt.</p><div class="actions"><a class="button accent" href="#finder">Werkzeug finden</a><a class="button ghost" style="color:white" href="#ratgeber">Erst informieren</a></div><div class="stats"><div class="stat"><b id="productStat">500</b>Produkte direkt sichtbar</div><div class="stat"><b>20</b>Ratgeber</div><div class="stat"><b>0</b>erfundene Bewertungen</div></div></div><div class="heroImage"><span class="caption">Eigene KI-Illustration · keine Produktabbildung</span></div></section>
+<section class="section" id="finder"><span class="eyebrow">Dein Werkzeug-Finder</span><h2>Was möchtest du anpacken?</h2><div class="finderPanel"><div class="needs">${["Alle", "Wohnung", "Haus", "Garten", "Werkstatt"].map((x) => `<button class="chip ${x === active ? "active" : ""}" data-use="${x}">${x}</button>`).join("")}</div><div class="chips" style="margin-top:12px">${["Alle Produkte", "Koffer", "Elektro"].map((x) => `<button class="chip" data-cat="${x}">${x}</button>`).join("")}</div><div class="toolbar"><input id="search" type="search" placeholder="Werkzeug, Gerät oder Marke suchen" aria-label="Produkte durchsuchen"><select id="brand"><option value="">Alle Marken</option>${[...new Set(products.map((p) => p.brand))].map((x) => `<option>${x}</option>`).join("")}</select><select id="sort"><option value="rec">Empfehlung</option><option value="low">Preis aufsteigend</option><option value="high">Preis absteigend</option></select></div><div class="notice" id="amazonStatus"><b>Amazon wird verbunden:</b> Alle verfügbaren Produkte werden mit Bildern und Preisen geladen.</div><div id="resultCount" class="meta"></div><div class="productGrid" id="produkte"></div><button class="load" id="loadMore" hidden>Weitere Produkte laden</button></div></section>
 <section class="section" id="beratung"><span class="eyebrow">Kaufberatung ohne Fachchinesisch</span><h2>Erst verstehen. Dann kaufen.</h2><div class="productGrid"><div class="editorial"><span class="meta">Erste Werkstatt</span><h3>Ein guter Arbeitsplatz spart mehr Nerven als das hundertste Spezialwerkzeug.</h3><a href="/ratgeber/werkstatt-einrichten">Werkstatt planen →</a></div><article class="articleCard"><div class="num">01</div><h3>Wohnung</h3><p>Für Möbel, Bilder und kleine Reparaturen kompakt starten.</p><a href="/ratgeber/werkzeug-fuer-mietwohnung">Zur Checkliste →</a></article><article class="articleCard"><div class="num">02</div><h3>Haus</h3><p>Solide Grundausstattung, die mit den Aufgaben wachsen kann.</p><a href="/ratgeber/werkzeug-fuer-haus">Hausausstattung planen →</a></article><article class="articleCard"><div class="num">03</div><h3>Garten</h3><p>Werkzeug nach Fläche, Pflanzen und Lagerplatz auswählen.</p><a href="/ratgeber/gartenwerkzeug-grundausstattung">Garten-Guide öffnen →</a></article></div></section>
 <section class="section" id="ratgeber"><span class="eyebrow">Werkzeug-Wissen</span><h2>20 Ratgeber für bessere Projekte.</h2><div class="articleGrid">${topics.map((a, i) => `<article class="articleCard"><div class="num">${String(i + 1).padStart(2, "0")}</div><span class="meta">${a.tag} · ${a.time} Min.</span><h3>${a.title}</h3><p>${a.intro}</p><a href="/ratgeber/${a.slug}">Ratgeber lesen →</a></article>`).join("")}</div></section>
 <section class="section legal" id="transparenz"><span class="eyebrow">Transparenz</span><h2>So empfehlen wir.</h2><p>Werkzeug Finder bewertet keine Produkte aus eigener Praxiserfahrung, wenn kein dokumentierter Test vorliegt. Produkte, Originalbilder, Preise und Verfügbarkeit werden serverseitig über die Amazon Creators API abgerufen. Farbvarianten werden anhand ASIN, Eltern-ASIN und Modellbezeichnung zusammengeführt. Affiliate-Links enthalten ausschließlich die Partner-ID <b>${TAG}</b>.</p></section>`;
@@ -366,7 +366,7 @@ function finderExtras() {
   };
   bar.querySelector(".clearFilters").onclick = () => {
     active = "Alle";
-    shown = 8;
+    shown = 500;
     document.querySelector('[data-use="Alle"]')?.click();
     $("#search").value = "";
     $("#brand").value = "";
@@ -439,11 +439,11 @@ function modelKey(p) {
       .replace(/\s+/g, " ")}`
   );
 }
-async function loadAmazonProducts(target = 120) {
+async function loadAmazonProducts(target = 500) {
   if (amazonState.loading || amazonPool.length >= target || amazonState.loaded) return;
   amazonState.loading = true;
   try {
-    while (amazonCursor < amazonTotalCursors && amazonPool.length < target && amazonPool.length < 1000) {
+    while (amazonCursor < amazonTotalCursors && amazonPool.length < target && amazonPool.length < 500) {
       let response = await fetch(`/api/products?cursor=${amazonCursor}`, {
         headers: { Accept: "application/json" },
       });
@@ -474,11 +474,16 @@ async function loadAmazonProducts(target = 120) {
       amazonState.checkedAt = data.checkedAt || amazonState.checkedAt;
       let status = $("#amazonStatus");
       if (status)
-        status.innerHTML = `<b>Katalog wird erweitert:</b> ${amazonPool.length} von bis zu 1.000 unterschiedlichen, verfügbaren Produkten geladen.`;
+        status.innerHTML = `<b>Produkte werden geladen:</b> ${amazonPool.length} von bis zu 500 Artikeln sind bereits sichtbar.`;
+      products = amazonPool.slice(0, 500);
+      const grid = $("#produkte");
+      if (grid) grid.innerHTML = productFeed(products);
+      const count = $("#resultCount");
+      if (count) count.textContent = `${products.length} geprüfte Modelle`;
     }
     if (!amazonPool.length) throw new Error("Keine verfügbaren Angebote");
-    products = amazonPool.slice(0, 1000);
-    amazonState.loaded = amazonPool.length >= 1000 || amazonCursor >= amazonTotalCursors;
+    products = amazonPool.slice(0, 500);
+    amazonState.loaded = amazonPool.length >= 500 || amazonCursor >= amazonTotalCursors;
     amazonState.loading = false;
     render();
     updateAmazonStatus();
@@ -552,7 +557,7 @@ function bind() {
     $("#produkte").innerHTML =
       productFeed(arr.slice(0, shown)) +
       (arr.length === 0 ? "<p>Keine passenden Produkte gefunden.</p>" : "");
-    $("#loadMore").hidden = shown >= arr.length && amazonState.loaded;
+    $("#loadMore").hidden = true;
     document.querySelectorAll("[data-fav]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -605,14 +610,6 @@ function bind() {
   ["search", "brand", "sort"].forEach((id) =>
     $("#" + id).addEventListener(id === "search" ? "input" : "change", update),
   );
-  $("#loadMore").onclick = async () => {
-    shown += 100;
-    if (shown >= products.length - 8 && !amazonState.loaded) {
-      await loadAmazonProducts(Math.min(1000, products.length + 160));
-      return;
-    }
-    update();
-  };
   update();
 }
 $("#menu").onclick = () => {

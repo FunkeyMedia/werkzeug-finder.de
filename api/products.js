@@ -164,7 +164,7 @@ export default async function handler(req, res) {
   try {
     const products = await searchBatch(cursor);
     res.setHeader("Cache-Control", "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600");
-    return res.status(200).json({ products, cursor, totalCursors, target: 1000, checkedAt: new Date().toISOString() });
+    return res.status(200).json({ products, cursor, totalCursors, target: 500, checkedAt: new Date().toISOString() });
   } catch (error) {
     res.setHeader("Cache-Control", "no-store");
     return res.status(503).json({ error: String(error.message || "amazon_unavailable"), products: [] });
