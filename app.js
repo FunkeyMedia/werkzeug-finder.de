@@ -334,10 +334,28 @@ function toolkitRecommendations() {
 function toolkitProductSection() {
   const selected = toolkitRecommendations();
   if (!selected.length) return "";
-  return `<section class="articleProducts"><p class="eyebrow">Passend zur Checkliste</p><h2>Geeignete Produkte für deinen ersten Werkzeugkoffer</h2><p>Starte mit einem vollständigen Koffer und ergänze nur das, was für deine Projekte wirklich fehlt. Preise und Bilder werden aktuell von Amazon geladen.</p><div class="articleProductGrid">${selected.map((product) => {
+  return recommendationProductSection(selected, "Geeignete Produkte für deinen ersten Werkzeugkoffer", "Starte mit einem vollständigen Koffer und ergänze nur das, was für deine Projekte wirklich fehlt.");
+}
+function workshopRecommendations() {
+  const wanted = /(werkbank|werkzeugwagen|werkzeugwand|lochwand|schraubstock|arbeitsleuchte|werkstattsauger|nass trockensauger|tischkreissäge|kappsäge|bandsäge|bohrhammer|winkelschleifer|kompressor)/i;
+  const matched = products.filter((product) => product.use === "Werkstatt" || wanted.test(`${product.name} ${product.cat}`));
+  return (matched.length >= 6 ? matched : products)
+    .sort((a, b) => Number(wanted.test(`${b.name} ${b.cat}`)) - Number(wanted.test(`${a.name} ${a.cat}`)))
+    .slice(0, 12);
+}
+function recommendationProductSection(selected, title, intro) {
+  if (!selected.length) return "";
+  return `<section class="articleProducts"><p class="eyebrow">Passend zur Checkliste</p><h2>${title}</h2><p>${intro} Preise und Bilder werden aktuell von Amazon geladen.</p><div class="articleProductGrid">${selected.map((product) => {
     const url = product.url || `https://www.amazon.de/dp/${product.asin}/ref=nosim?tag=${TAG}`;
     return `<article class="articleProduct"><a href="${url}" target="_blank" rel="nofollow sponsored noopener"><img src="${product.img}" alt="${esc(product.name)}" loading="lazy"><span>${esc(product.brand)} · ${product.cat}</span><h3>${esc(product.name)}</h3><ul>${productUsps(product).map((usp) => `<li>${esc(usp)}</li>`).join("")}</ul><strong>${product.price}</strong><b class="articleProductCta">Bei Amazon ansehen* →</b></a></article>`;
   }).join("")}</div><small>* Werbelink. Preis und Verfügbarkeit können sich bei Amazon ändern.</small></section>`;
+}
+function workshopProductSection() {
+  return recommendationProductSection(
+    workshopRecommendations(),
+    "Passende Produkte für deinen Werkzeugkeller",
+    "Plane zuerst Arbeitsplatz, Licht und Aufbewahrung. Ergänze anschließend Maschinen passend zu deinen häufigsten Projekten.",
+  );
 }
 function home() {
   document.title = "Werkzeug Finder – Das richtige Werkzeug für dein Projekt";
@@ -349,7 +367,11 @@ function home() {
 }
 function article(a) {
   let related = topics.filter((x) => x.slug !== a.slug).slice(0, 2);
-  const recommendations = a.slug === "werkzeugkoffer-grundausstattung" ? toolkitProductSection() : "";
+  const recommendations = a.slug === "werkzeugkoffer-grundausstattung"
+    ? toolkitProductSection()
+    : a.slug === "werkstatt-einrichten"
+      ? workshopProductSection()
+      : "";
   return `<article class="articlePage"><a href="/#ratgeber">← Alle Ratgeber</a><p class="eyebrow">${a.tag} · ${a.time} Minuten Lesezeit</p><h1>${a.title}</h1><p style="font-size:1.25rem">${a.intro}</p><h2>Worum es bei der Auswahl wirklich geht</h2><p>Das passende Werkzeug ist nicht automatisch das größte oder teuerste. Entscheidend sind Material, Häufigkeit der Nutzung, verfügbarer Platz und die Präzision, die dein Projekt verlangt. Für gelegentliche Arbeiten lohnt sich ein kompaktes, solides Set. Wer regelmäßig arbeitet, ergänzt gezielt und achtet auf Ergonomie, Ersatzteile und ein einheitliches Akkusystem.</p><h2>Ein praktisches Beispiel</h2><p>Angenommen, du möchtest ein Regal montieren: Prüfe zuerst die Wand, bestimme Bohrer und Dübel, miss zweimal und markiere sauber. Lege Schutzbrille, Leitungssucher, Wasserwaage, Bohrmaschine, passenden Bit und Staubsauger bereit. Diese Vorbereitung verhindert die häufigsten Schäden – lange bevor Kraft oder Maschinenleistung wichtig werden.</p><h2>So gehst du Schritt für Schritt vor</h2><p><b>1. Aufgabe eingrenzen:</b> Was soll bearbeitet, verbunden oder gemessen werden? <b>2. Untergrund prüfen:</b> Holz, Metall, Mauerwerk und Gipskarton brauchen unterschiedliche Lösungen. <b>3. Werkzeug passend dimensionieren:</b> Arbeitsbereich und Zubehör müssen zusammenpassen. <b>4. Sicher arbeiten:</b> Anleitung lesen, Arbeitsbereich freihalten und Schutz passend zur Gefahr wählen.</p><div class="checklist"><h2>Checkliste</h2><ul><li>Material und Abmessungen geprüft</li><li>Passendes Werkzeug und Zubehör bereitgelegt</li><li>Strom-, Wasser- oder Gasleitungen ausgeschlossen</li><li>Schutzbrille und erforderlicher Gehörschutz vorhanden</li><li>Werkstück sicher fixiert</li><li>Ergebnis vor dem finalen Schritt kontrolliert</li></ul></div>${recommendations}<h2>Häufige Fehler vermeiden</h2><p>Viele Probleme entstehen durch falsche Größe, stumpfes Zubehör oder zu viel Kraft. Stoppe, wenn ein Werkzeug verkantet, ungewöhnlich heiß wird oder der Untergrund unerwartet reagiert. Im Zweifel ist eine kurze Materialprobe an einer unauffälligen Stelle sinnvoller als ein riskanter Versuch.</p><h2>Quellen und weiterführende Hinweise</h2><p>Für sicherheitsrelevante Arbeiten gelten die Anleitung des Herstellers, die Hinweise der Deutschen Gesetzlichen Unfallversicherung und bei Elektroinstallationen die Regeln des zuständigen Fachhandwerks. Arbeiten an festen Elektro-, Gas- oder Wasserinstallationen gehören je nach Umfang in Fachhände.</p><div class="related">${related.map((x) => `<a class="articleCard" href="/ratgeber/${x.slug}"><span class="meta">Weiterlesen</span><h3>${x.title}</h3><p>${x.intro}</p></a>`).join("")}</div></article>`;
 }
 function legal(kind) {
