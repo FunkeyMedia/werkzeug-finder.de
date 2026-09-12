@@ -80,7 +80,7 @@ function normalize(item, search) {
   const listing = (item.offersV2?.listings || []).find(entry => entry.isBuyBoxWinner) || item.offersV2?.listings?.[0];
   const money = listing?.price?.money;
   const features = (item.itemInfo?.features?.displayValues || []).filter(v => typeof v === "string").slice(0, 3);
-  const partnerTag = process.env.AMAZON_PARTNER_TAG || "Onlinestarkei-21";
+  const partnerTag = "Onlinestarkei-21";
   return {
     asin: item.asin,
     parentAsin: item.parentASIN || null,
@@ -107,8 +107,8 @@ async function searchPage(searchIndex, itemPage) {
     method: "POST",
     headers: { Authorization: `Bearer ${await getToken()}`, "Content-Type": "application/json", "x-marketplace": "www.amazon.de" },
     body: JSON.stringify({
-      keywords: search.keywords, searchIndex: "All", itemCount: 10, itemPage,
-      marketplace: "www.amazon.de", partnerTag: process.env.AMAZON_PARTNER_TAG || "Onlinestarkei-21", condition: "New",
+      keywords: search.keywords, itemCount: 10, itemPage,
+      marketplace: "www.amazon.de", partnerTag: (process.env.AMAZON_PARTNER_TAG || "Onlinestarkei-21").toLowerCase(), condition: "New",
       resources: ["images.primary.large", "itemInfo.title", "itemInfo.byLineInfo", "itemInfo.features", "offersV2.listings.price", "offersV2.listings.availability", "parentASIN"]
     }),
     signal: AbortSignal.timeout(15000)
@@ -122,6 +122,7 @@ async function searchPage(searchIndex, itemPage) {
 
 async function searchBatch(cursor) {
   const products = [];
+  let lastError;
   const first = cursor * SEARCHES_PER_BATCH;
   const total = searches.length * PAGES_PER_SEARCH;
   for (let i = 0; i < SEARCHES_PER_BATCH; i++) {
@@ -130,9 +131,10 @@ async function searchBatch(cursor) {
     const searchIndex = searchPageIndex % searches.length;
     const itemPage = Math.floor(searchPageIndex / searches.length) + 1;
     try { products.push(...await searchPage(searchIndex, itemPage)); }
-    catch (error) { if (String(error?.message || error).includes("_401")) throw error; }
+    catch (error) { lastError = error; if (String(error?.message || error).includes("_401")) throw error; }
     if (i < SEARCHES_PER_BATCH - 1) await new Promise(resolve => setTimeout(resolve, 1100));
   }
+  if (!products.length && lastError) throw lastError;
   return products;
 }
 
