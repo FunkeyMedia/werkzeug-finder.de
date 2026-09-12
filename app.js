@@ -295,7 +295,7 @@ function productUsps(p) {
 function productCard(p) {
   let url = p.url || `https://www.amazon.de/dp/${p.asin}/ref=nosim?tag=${TAG}`;
   let images = [...new Set([p.img, ...(p.images || [])].filter(Boolean))].slice(0, 5);
-  return `<article class="product shopCard"><div class="productVisual"><a class="shopPhoto" target="_blank" rel="nofollow sponsored noopener" href="${url}" aria-label="${esc(p.name)} bei Amazon ansehen"><img data-main-image="${p.asin}" src="${images[0]}" alt="${esc(p.name)}" loading="lazy"></a>${images.length > 1 ? `<div class="imageGallery" aria-label="Weitere Produktbilder">${images.map((image, index) => `<button type="button" class="galleryThumb ${index === 0 ? "active" : ""}" data-gallery="${p.asin}" data-image="${image}" aria-label="Produktbild ${index + 1} anzeigen"><img src="${image}" alt="" loading="lazy"></button>`).join("")}</div>` : ""}</div><div class="productBody"><span class="shopCategory">${esc(p.brand)} · ${p.cat}</span><h3><a target="_blank" rel="nofollow sponsored noopener" href="${url}">${esc(p.name)}</a></h3><ul class="productUsps">${productUsps(
+  return `<article class="product shopCard"><div class="productVisual"><a class="shopPhoto" target="_blank" rel="nofollow sponsored noopener" href="${url}" aria-label="${esc(p.name)} bei Amazon ansehen"><img data-main-image="${p.asin}" src="${images[0]}" alt="${esc(p.name)}" loading="lazy"></a>${images.length > 1 ? `<div class="imageGallery" aria-label="Produktbilder durchblättern"><button type="button" class="galleryArrow" data-gallery-step="-1" aria-label="Vorheriges Produktbild">‹</button><div class="galleryDots">${images.map((image, index) => `<button type="button" class="galleryDot ${index === 0 ? "active" : ""}" data-gallery="${p.asin}" data-image="${image}" aria-label="Produktbild ${index + 1} von ${images.length} anzeigen"></button>`).join("")}</div><button type="button" class="galleryArrow" data-gallery-step="1" aria-label="Nächstes Produktbild">›</button></div>` : ""}</div><div class="productBody"><span class="shopCategory">${esc(p.brand)} · ${p.cat}</span><h3><a target="_blank" rel="nofollow sponsored noopener" href="${url}">${esc(p.name)}</a></h3><ul class="productUsps">${productUsps(
     p,
   )
     .map((x) => `<li>${esc(x)}</li>`)
@@ -543,14 +543,21 @@ function bind() {
           update();
         }),
     );
-    document.querySelectorAll("[data-gallery]").forEach((button) => {
-      button.onclick = () => {
-        const main = document.querySelector(`[data-main-image="${button.dataset.gallery}"]`);
-        if (main) main.src = button.dataset.image;
-        button.parentElement
-          .querySelectorAll(".galleryThumb")
-          .forEach((thumb) => thumb.classList.toggle("active", thumb === button));
+    document.querySelectorAll(".imageGallery").forEach((gallery) => {
+      const dots = [...gallery.querySelectorAll(".galleryDot")];
+      const main = gallery.closest(".productVisual").querySelector("[data-main-image]");
+      const showImage = (index) => {
+        const next = (index + dots.length) % dots.length;
+        main.src = dots[next].dataset.image;
+        dots.forEach((dot, position) => dot.classList.toggle("active", position === next));
       };
+      dots.forEach((dot, index) => (dot.onclick = () => showImage(index)));
+      gallery.querySelectorAll("[data-gallery-step]").forEach((arrow) => {
+        arrow.onclick = () => {
+          const current = Math.max(0, dots.findIndex((dot) => dot.classList.contains("active")));
+          showImage(current + Number(arrow.dataset.galleryStep));
+        };
+      });
     });
   }
   document.querySelectorAll("[data-use]").forEach(
