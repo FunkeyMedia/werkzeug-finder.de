@@ -136,7 +136,7 @@ async function searchPage(searchIndex, itemPage) {
 }
 
 async function searchBatch(cursor) {
-  const products = [];
+  const batches = [];
   let lastError;
   const first = cursor * SEARCHES_PER_BATCH;
   const total = searches.length * PAGES_PER_SEARCH;
@@ -145,10 +145,13 @@ async function searchBatch(cursor) {
     if (searchPageIndex >= total) break;
     const searchIndex = searchPageIndex % searches.length;
     const itemPage = Math.floor(searchPageIndex / searches.length) + 1;
-    try { products.push(...await searchPage(searchIndex, itemPage)); }
+    try { batches.push(await searchPage(searchIndex, itemPage)); }
     catch (error) { lastError = error; if (String(error?.message || error).includes("_401")) throw error; }
     if (i < SEARCHES_PER_BATCH - 1) await new Promise(resolve => setTimeout(resolve, 1100));
   }
+  const products = Array.from({ length: Math.max(0, ...batches.map(batch => batch.length)) }, (_, index) =>
+    batches.map(batch => batch[index]).filter(Boolean)
+  ).flat();
   if (!products.length && lastError) throw lastError;
   return products;
 }
