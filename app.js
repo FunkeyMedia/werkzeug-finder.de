@@ -303,6 +303,23 @@ function productCard(p) {
       "",
     )}</ul><label class="compareChoice"><input type="checkbox" data-compare="${p.asin}" ${compare.has(p.asin) ? "checked" : ""}> Vergleichen</label><div class="shopPurchase"><span class="priceLabel">Aktueller Amazon-Preis</span><div class="price">${p.price}</div><div class="shopActions"><a class="shopBuy" target="_blank" rel="nofollow sponsored noopener" href="${url}"><span>Preis bei Amazon prüfen*</span><b>→</b></a><button class="heart ${fav.has(p.asin) ? "on" : ""}" data-fav="${p.asin}" aria-label="${esc(p.name)} merken">♥</button></div></div></div></article>`;
 }
+const inspirationTiles = [
+  { image: "/assets/editorial/werkzeug-mietwohnung-regal-montieren.jpg", eyebrow: "Erste Wohnung", title: "Sicher montieren, ohne unnötig viel Werkzeug.", link: "/ratgeber/werkzeug-fuer-mietwohnung" },
+  { image: "/assets/editorial/werkzeug-garten-hochbeet-bauen.jpg", eyebrow: "Projekt Garten", title: "Mit der richtigen Auswahl wird aus einer Idee ein Wochenende-Projekt.", link: "/ratgeber/gartenwerkzeug-grundausstattung" },
+  { image: "/assets/editorial/werkzeug-werkstatt-organisieren.jpg", eyebrow: "Eigene Werkstatt", title: "Gutes Arbeiten beginnt mit einem Platz, an dem alles griffbereit ist.", link: "/ratgeber/werkstatt-einrichten" },
+];
+function productFeed(list) {
+  let html = "";
+  list.forEach((product, index) => {
+    html += productCard(product);
+    const tileIndex = index === 2 ? 0 : index === 6 ? 1 : index === 10 ? 2 : -1;
+    if (tileIndex >= 0) {
+      const tile = inspirationTiles[tileIndex];
+      html += `<article class="inspirationCard"><img src="${tile.image}" alt="Menschen bei einem Heimwerkerprojekt" loading="lazy"><div class="inspirationBody"><span>${tile.eyebrow}</span><h3>${tile.title}</h3><a href="${tile.link}">Passenden Ratgeber lesen →</a><small>KI-generiertes redaktionelles Motiv</small></div></article>`;
+    }
+  });
+  return html;
+}
 function home() {
   document.title = "Werkzeug Finder – Das richtige Werkzeug für dein Projekt";
   return `<section class="hero"><div class="heroCopy"><span class="eyebrow">Klar auswählen. Besser arbeiten.</span><h1>Mach’s richtig. Von Anfang an.</h1><p>Ob erste Mietwohnung, eigenes Haus, Garten oder Werkstatt: Finde genau das Werkzeug, das zu deinem Projekt und deinem Können passt.</p><div class="actions"><a class="button accent" href="#finder">Werkzeug finden</a><a class="button ghost" style="color:white" href="#ratgeber">Erst informieren</a></div><div class="stats"><div class="stat"><b id="productStat">100</b>aktuelle Modelle angestrebt</div><div class="stat"><b>20</b>Ratgeber</div><div class="stat"><b>0</b>erfundene Bewertungen</div></div></div><div class="heroImage"><span class="caption">Eigene KI-Illustration · keine Produktabbildung</span></div></section>
@@ -530,7 +547,7 @@ function bind() {
       );
     $("#resultCount").textContent = `${arr.length} geprüfte Modelle`;
     $("#produkte").innerHTML =
-      arr.slice(0, shown).map(productCard).join("") +
+      productFeed(arr.slice(0, shown)) +
       (arr.length === 0 ? "<p>Keine passenden Produkte gefunden.</p>" : "");
     $("#loadMore").hidden = shown >= arr.length;
     document.querySelectorAll("[data-fav]").forEach(
