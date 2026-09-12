@@ -301,7 +301,7 @@ function productCard(p) {
     .map((x) => `<li>${esc(x)}</li>`)
     .join(
       "",
-    )}</ul><label class="compareChoice"><input type="checkbox" data-compare="${p.asin}" ${compare.has(p.asin) ? "checked" : ""}> Vergleichen</label><div class="shopPurchase"><span class="priceLabel">Aktueller Amazon-Preis</span><div class="price">${p.price}</div><div class="shopActions"><a class="shopBuy" target="_blank" rel="nofollow sponsored noopener" href="${url}"><span>Preis bei Amazon prüfen*</span><b>→</b></a><button class="heart ${fav.has(p.asin) ? "on" : ""}" data-fav="${p.asin}" aria-label="${esc(p.name)} merken">♥</button></div><small class="purchaseHint">Direkt zum Angebot · für dich ohne Mehrkosten</small></div></div></article>`;
+    )}</ul><label class="compareChoice"><input type="checkbox" data-compare="${p.asin}" ${compare.has(p.asin) ? "checked" : ""}> Vergleichen</label><div class="shopPurchase"><span class="priceLabel">Aktueller Amazon-Preis</span><div class="price">${p.price}</div><div class="shopActions"><a class="shopBuy" target="_blank" rel="nofollow sponsored noopener" href="${url}"><span>Preis bei Amazon prüfen*</span><b>→</b></a><button class="heart ${fav.has(p.asin) ? "on" : ""}" data-fav="${p.asin}" aria-label="${esc(p.name)} merken">♥</button></div></div></div></article>`;
 }
 function home() {
   document.title = "Werkzeug Finder – Das richtige Werkzeug für dein Projekt";
