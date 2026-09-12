@@ -2,46 +2,58 @@ let accessToken;
 let tokenExpires = 0;
 const cache = new Map();
 
-const searches = [
-  ["Werkzeugkoffer komplett hochwertig", "Werkzeugkoffer", "Werkstatt"],
-  ["Werkzeugkoffer Haushalt", "Werkzeugkoffer", "Möbelmontage"],
-  ["Steckschlüsselsatz Ratschenkasten", "Handwerkzeug", "Werkstatt"],
-  ["Schraubendreher Set", "Handwerkzeug", "Möbelmontage"],
-  ["Zangen Set", "Handwerkzeug", "Elektro"],
-  ["Maulschlüssel Ringschlüssel Satz", "Handwerkzeug", "Werkstatt"],
-  ["Hammer Heimwerker", "Handwerkzeug", "Möbelmontage"],
-  ["Wasserwaage Heimwerker", "Messen", "Möbelmontage"],
-  ["Laser Entfernungsmesser", "Messen", "Möbelmontage"],
-  ["Leitungssucher Wand", "Messen", "Elektro"],
-  ["Akkuschrauber 18V Set", "Elektrowerkzeug", "Möbelmontage"],
-  ["Akku Bohrschrauber 12V", "Elektrowerkzeug", "Möbelmontage"],
-  ["Schlagbohrmaschine", "Elektrowerkzeug", "Elektro"],
-  ["Bohrhammer SDS Plus", "Elektrowerkzeug", "Elektro"],
-  ["Stichsäge elektrisch", "Sägen", "Holz"],
-  ["Handkreissäge", "Sägen", "Holz"],
-  ["Kappsäge Gehrungssäge", "Sägen", "Holz"],
-  ["Multitool oszillierend", "Elektrowerkzeug", "Sanitär"],
-  ["Exzenterschleifer", "Elektrowerkzeug", "Holz"],
-  ["Winkelschleifer", "Elektrowerkzeug", "Werkstatt"],
-  ["Heißluftpistole", "Elektrowerkzeug", "Sanitär"],
-  ["Bohrer Set Holz Metall Stein", "Zubehör", "Elektro"],
-  ["Bit Set hochwertig", "Zubehör", "Möbelmontage"],
-  ["Dübel Sortiment Schrauben", "Zubehör", "Möbelmontage"],
-  ["Rohrzange Wasserpumpenzange", "Sanitärwerkzeug", "Sanitär"],
-  ["Rohrschneider Kupfer Kunststoff", "Sanitärwerkzeug", "Sanitär"],
-  ["Kartuschenpresse Silikon", "Sanitärwerkzeug", "Sanitär"],
-  ["Spaten Garten ergonomisch", "Gartenwerkzeug", "Garten"],
-  ["Gartenschere hochwertig", "Gartenwerkzeug", "Garten"],
-  ["Astschere Teleskop", "Gartenwerkzeug", "Garten"],
-  ["Akku Heckenschere", "Gartengerät", "Garten"],
-  ["Akku Rasentrimmer", "Gartengerät", "Garten"],
-  ["Werkbank stabil", "Werkstattausstattung", "Werkstatt"],
-  ["Schraubstock Werkbank", "Werkstattausstattung", "Werkstatt"],
-  ["Werkzeugwand Lochwand", "Aufbewahrung", "Werkstatt"],
-  ["Werkzeugwagen bestückt", "Aufbewahrung", "Werkstatt"]
-].map(([keywords, category, use]) => ({ keywords, category, use }));
+const coreSearches = [
+  ["Akkuschrauber", "Akkuschrauber", "Möbelmontage"], ["Akku Bohrschrauber", "Bohrmaschinen", "Elektro"],
+  ["Akku Schlagbohrschrauber", "Bohrmaschinen", "Elektro"], ["Schlagbohrmaschine", "Bohrmaschinen", "Elektro"],
+  ["Bohrhammer SDS Plus", "Bohrmaschinen", "Elektro"], ["Abbruchhammer", "Bohrmaschinen", "Werkstatt"],
+  ["Akku Schlagschrauber", "Akkuschrauber", "Werkstatt"], ["Trockenbauschrauber", "Akkuschrauber", "Werkstatt"],
+  ["Stichsäge", "Sägen", "Holz"], ["Handkreissäge", "Sägen", "Holz"], ["Tauchsäge", "Sägen", "Holz"],
+  ["Kappsäge Gehrungssäge", "Stationärgeräte", "Holz"], ["Tischkreissäge", "Stationärgeräte", "Holz"],
+  ["Säbelsäge", "Sägen", "Werkstatt"], ["Bandsäge", "Stationärgeräte", "Holz"], ["Dekupiersäge", "Stationärgeräte", "Holz"],
+  ["Exzenterschleifer", "Schleifmaschinen", "Holz"], ["Schwingschleifer", "Schleifmaschinen", "Holz"],
+  ["Bandschleifer", "Schleifmaschinen", "Holz"], ["Deltaschleifer", "Schleifmaschinen", "Holz"],
+  ["Winkelschleifer", "Trennen & Schleifen", "Werkstatt"], ["Mini Winkelschleifer", "Trennen & Schleifen", "Werkstatt"],
+  ["Oberfräse", "Holzbearbeitung", "Holz"], ["Kantenfräse", "Holzbearbeitung", "Holz"], ["Elektrohobel", "Holzbearbeitung", "Holz"],
+  ["Multifunktionswerkzeug oszillierend", "Multifunktionsgeräte", "Sanitär"], ["Rotationswerkzeug", "Multifunktionsgeräte", "Werkstatt"],
+  ["Heißluftgebläse", "Elektrowerkzeug", "Sanitär"], ["Farbsprühsystem", "Renovieren", "Werkstatt"],
+  ["Elektrotacker", "Elektrowerkzeug", "Möbelmontage"], ["Heißklebepistole", "Elektrowerkzeug", "Möbelmontage"],
+  ["Akku Kompressor Luftpumpe", "Elektrowerkzeug", "Werkstatt"], ["Nass Trockensauger Werkstatt", "Reinigung", "Werkstatt"],
+  ["Baustellenradio", "Werkstattausstattung", "Werkstatt"], ["Akku Arbeitsleuchte", "Werkstattausstattung", "Werkstatt"],
+  ["Kreuzlinienlaser", "Messtechnik", "Möbelmontage"], ["Laser Entfernungsmesser", "Messtechnik", "Möbelmontage"],
+  ["Ortungsgerät Leitungssucher", "Messtechnik", "Elektro"], ["Wärmebildkamera Handwerk", "Messtechnik", "Sanitär"],
+  ["Werkzeugkoffer komplett", "Werkzeugkoffer", "Werkstatt"], ["Steckschlüsselsatz", "Handwerkzeug", "Werkstatt"],
+  ["Schraubendreher Set", "Handwerkzeug", "Möbelmontage"], ["Zangen Set", "Handwerkzeug", "Elektro"],
+  ["Drehmomentschlüssel", "Handwerkzeug", "Werkstatt"], ["Wasserwaage", "Messtechnik", "Möbelmontage"],
+  ["Werkbank", "Werkstattausstattung", "Werkstatt"], ["Werkzeugwagen", "Aufbewahrung", "Werkstatt"],
+  ["Rasenmäher Akku", "Rasenpflege", "Garten"], ["Rasenmäher Elektro", "Rasenpflege", "Garten"],
+  ["Mähroboter", "Rasenpflege", "Garten"], ["Akku Rasentrimmer", "Rasenpflege", "Garten"],
+  ["Akku Heckenschere", "Heckenpflege", "Garten"], ["Teleskop Heckenschere", "Heckenpflege", "Garten"],
+  ["Akku Kettensäge", "Baumpflege", "Garten"], ["Akku Astsäge", "Baumpflege", "Garten"],
+  ["Gartenhäcksler", "Gartengeräte", "Garten"], ["Laubbläser Laubsauger", "Gartengeräte", "Garten"],
+  ["Akku Grasschere Strauchschere", "Gartengeräte", "Garten"], ["Gartenschere", "Gartenhandwerkzeug", "Garten"],
+  ["Hochdruckreiniger", "Reinigung", "Garten"], ["Akku Regenwasserpumpe", "Pumpen", "Garten"],
+  ["Gartenpumpe", "Pumpen", "Garten"], ["Tauchpumpe Schmutzwasser", "Pumpen", "Sanitär"],
+  ["Rohrzange Wasserpumpenzange", "Sanitärwerkzeug", "Sanitär"], ["Rohrschneider", "Sanitärwerkzeug", "Sanitär"],
+  ["Presszange Sanitär", "Sanitärwerkzeug", "Sanitär"], ["Kartuschenpresse", "Sanitärwerkzeug", "Sanitär"],
+  ["Bohrer Set Holz Metall Stein", "Zubehör", "Elektro"], ["Bit Set", "Zubehör", "Möbelmontage"],
+  ["Sägeblatt Set", "Zubehör", "Holz"], ["Schleifpapier Set", "Zubehör", "Holz"],
+  ["Werkzeug Akku Ladegerät", "Akkus & Ladegeräte", "Werkstatt"], ["Werkzeug Aufbewahrung Systemkoffer", "Aufbewahrung", "Werkstatt"]
+];
+const brands = ["Bosch", "Makita", "DeWalt", "Einhell", "Metabo", "Milwaukee", "Ryobi", "Black Decker"];
+const useGroups = Object.values(coreSearches.reduce((groups, item) => {
+  (groups[item[2]] ||= []).push(item);
+  return groups;
+}, {}));
+const orderedSearches = Array.from({ length: Math.max(...useGroups.map(group => group.length)) }, (_, index) =>
+  useGroups.map(group => group[index]).filter(Boolean)
+).flat();
+const searches = [0, 1, 2].flatMap(round => orderedSearches.map(([keywords, category, use], index) => ({
+  keywords: round === 0 ? keywords : `${brands[(index + round * 3) % brands.length]} ${keywords}`,
+  category,
+  use
+})));
 
-const PAGES_PER_SEARCH = 3;
+const PAGES_PER_SEARCH = 1;
 const SEARCHES_PER_BATCH = 5;
 
 function trustedImage(value) {
@@ -149,7 +161,7 @@ export default async function handler(req, res) {
   try {
     const products = await searchBatch(cursor);
     res.setHeader("Cache-Control", "public, max-age=0, s-maxage=1800, stale-while-revalidate=3600");
-    return res.status(200).json({ products, cursor, totalCursors, target: 100, checkedAt: new Date().toISOString() });
+    return res.status(200).json({ products, cursor, totalCursors, target: 1000, checkedAt: new Date().toISOString() });
   } catch (error) {
     res.setHeader("Cache-Control", "no-store");
     return res.status(503).json({ error: String(error.message || "amazon_unavailable"), products: [] });
