@@ -1,1 +1,1 @@
-{"rewrites":[{"source":"/(.*)","destination":"/index.html"}],"cleanUrls":true}
+{"routes":[{"src":"/api/products","dest":"/api/products.js"},{"handle":"filesystem"},{"src":"/.*","dest":"/index.html"}],"functions":{"api/products.js":{"maxDuration":30}},"cleanUrls":true}
