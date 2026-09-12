@@ -157,6 +157,8 @@ async function searchBatch(cursor) {
 }
 
 export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
   if (req.method !== "GET") return res.status(405).json({ error: "method_not_allowed" });
   if (!process.env.AMAZON_CREDENTIAL_ID || !process.env.AMAZON_CREDENTIAL_SECRET) return res.status(503).json({ error: "credentials_missing", products: [] });
   const totalCursors = Math.ceil((searches.length * PAGES_PER_SEARCH) / SEARCHES_PER_BATCH);

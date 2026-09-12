@@ -482,7 +482,10 @@ async function loadAmazonProducts(target = 500) {
   amazonState.loading = true;
   try {
     while (amazonCursor < amazonTotalCursors && amazonPool.length < target && amazonPool.length < 500) {
-      let response = await fetch(`/api/products?cursor=${amazonCursor}`, {
+      const apiRoot = window.location.protocol === "file:"
+        ? "https://site-ten-sandy-53.vercel.app"
+        : "";
+      let response = await fetch(`${apiRoot}/api/products?cursor=${amazonCursor}`, {
         headers: { Accept: "application/json" },
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
