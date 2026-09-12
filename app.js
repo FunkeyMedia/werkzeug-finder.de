@@ -285,25 +285,23 @@ function saveFav() {
   document.querySelector("#favTop b").textContent = fav.size;
 }
 function productUsps(p) {
-  if (p.features?.length) return p.features.slice(0, 3);
   let count = (p.name.match(/(\d+)-teilig/) || [])[1];
   return [
-    count ? `${count}-teilige Ausstattung` : "Kompakte Grundausstattung",
-    p.cat === "Elektro"
-      ? "Akkuschrauber inklusive"
-      : "Für den direkten Projekteinsatz",
-    `Geeignet für ${p.use}`,
+    count ? `${count}-teilig` : "Bewährte Markenqualität",
+    p.cat,
+    `Ideal für ${p.use}`,
   ];
 }
 function productCard(p) {
   let url = p.url || `https://www.amazon.de/dp/${p.asin}/ref=nosim?tag=${TAG}`;
-  return `<article class="product shopCard"><a class="shopPhoto" target="_blank" rel="nofollow sponsored noopener" href="${url}" aria-label="${esc(p.name)} bei Amazon ansehen"><img src="${p.img}" alt="${esc(p.name)}" loading="lazy"></a><div class="productBody"><span class="shopCategory">${p.cat} · ${p.use}</span><h3><a target="_blank" rel="nofollow sponsored noopener" href="${url}">${esc(p.name)}</a></h3><ul class="productUsps">${productUsps(
+  let images = [...new Set([p.img, ...(p.images || [])].filter(Boolean))].slice(0, 5);
+  return `<article class="product shopCard"><div class="productVisual"><a class="shopPhoto" target="_blank" rel="nofollow sponsored noopener" href="${url}" aria-label="${esc(p.name)} bei Amazon ansehen"><span class="premiumBadge">Amazon-Auswahl</span><img data-main-image="${p.asin}" src="${images[0]}" alt="${esc(p.name)}" loading="lazy"></a>${images.length > 1 ? `<div class="imageGallery" aria-label="Weitere Produktbilder">${images.map((image, index) => `<button type="button" class="galleryThumb ${index === 0 ? "active" : ""}" data-gallery="${p.asin}" data-image="${image}" aria-label="Produktbild ${index + 1} anzeigen"><img src="${image}" alt="" loading="lazy"></button>`).join("")}</div>` : ""}</div><div class="productBody"><span class="shopCategory">${esc(p.brand)} · ${p.cat}</span><h3><a target="_blank" rel="nofollow sponsored noopener" href="${url}">${esc(p.name)}</a></h3><ul class="productUsps">${productUsps(
     p,
   )
     .map((x) => `<li>${esc(x)}</li>`)
     .join(
       "",
-    )}</ul><label class="compareChoice"><input type="checkbox" data-compare="${p.asin}" ${compare.has(p.asin) ? "checked" : ""}> Vergleichen</label><div class="shopPurchase"><div class="price">${p.price}</div><div class="shopActions"><a class="shopBuy" target="_blank" rel="nofollow sponsored noopener" href="${url}">Bei Amazon ansehen* <span>↗</span></a><button class="heart ${fav.has(p.asin) ? "on" : ""}" data-fav="${p.asin}" aria-label="${esc(p.name)} merken">♥</button></div></div></div></article>`;
+    )}</ul><label class="compareChoice"><input type="checkbox" data-compare="${p.asin}" ${compare.has(p.asin) ? "checked" : ""}> Vergleichen</label><div class="shopPurchase"><span class="priceLabel">Aktueller Amazon-Preis</span><div class="price">${p.price}</div><div class="shopActions"><a class="shopBuy" target="_blank" rel="nofollow sponsored noopener" href="${url}"><span>Preis bei Amazon prüfen*</span><b>→</b></a><button class="heart ${fav.has(p.asin) ? "on" : ""}" data-fav="${p.asin}" aria-label="${esc(p.name)} merken">♥</button></div><small class="purchaseHint">Direkt zum Angebot · für dich ohne Mehrkosten</small></div></div></article>`;
 }
 function home() {
   document.title = "Werkzeug Finder – Das richtige Werkzeug für dein Projekt";
@@ -329,7 +327,10 @@ function finderExtras() {
     needs = panel.querySelector(".needs");
   needs.innerHTML = `<div class="filterGroup"><b>Thema wählen</b><div class="filterChoices">${["Alle", "Elektro", "Sanitär", "Garten", "Holz", "Möbelmontage", "Werkstatt"].map((x) => `<button class="chip ${x === active ? "active" : ""}" data-use="${x}">${x}</button>`).join("")}</div></div>`;
   let cats = panel.querySelector(".chips");
-  cats.innerHTML = `<div class="filterGroup"><b>Marke wählen</b><div class="filterChoices"><button class="chip active" data-brand-chip="">Alle Marken</button>${[...new Set(products.map((p) => p.brand))].map((x) => `<button class="chip" data-brand-chip="${x}">${x}</button>`).join("")}</div></div>`;
+  const premiumNames = ["Bosch Professional", "Bosch", "Makita", "DeWalt", "Festool", "Metabo", "Milwaukee", "Knipex", "Wera", "Wiha", "Hazet", "GEDORE"];
+  const availableBrands = [...new Set(products.map((p) => p.brand))];
+  const premiumBrands = [...new Set(premiumNames.map((name) => availableBrands.find((brand) => brand.toLowerCase().includes(name.toLowerCase()))).filter(Boolean))];
+  cats.innerHTML = `<div class="filterGroup premiumFilter"><b>Premium-Marken</b><span class="filterHelp">Schnell zu bewährten Herstellern</span><div class="filterChoices"><button class="chip active" data-brand-chip="">Alle Marken</button>${premiumBrands.map((brand) => `<button class="chip premiumChip" data-brand-chip="${esc(brand)}">${esc(brand)}</button>`).join("")}</div></div>`;
   let bar = document.createElement("div");
   bar.className = "filterUtility";
   bar.innerHTML =
@@ -439,6 +440,7 @@ async function loadAmazonProducts() {
           use: item.use,
           price: item.price,
           img: item.image,
+          images: item.images || [item.image],
           url: item.url,
           features: item.features || [],
         };
@@ -541,6 +543,15 @@ function bind() {
           update();
         }),
     );
+    document.querySelectorAll("[data-gallery]").forEach((button) => {
+      button.onclick = () => {
+        const main = document.querySelector(`[data-main-image="${button.dataset.gallery}"]`);
+        if (main) main.src = button.dataset.image;
+        button.parentElement
+          .querySelectorAll(".galleryThumb")
+          .forEach((thumb) => thumb.classList.toggle("active", thumb === button));
+      };
+    });
   }
   document.querySelectorAll("[data-use]").forEach(
     (b) =>
