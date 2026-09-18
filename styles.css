@@ -626,3 +626,6 @@ button,
     height: 210px;
   }
 }
+
+/* Editorial scenes: reserve image space and retain the full mobile composition. */
+.editorial-scene{margin:28px 0;max-width:100%;min-width:0}.editorial-scene img{display:block;width:100%;height:auto;border-radius:18px}.editorial-scene figcaption{margin-top:8px;font-size:12px;line-height:1.5;color:#626762}.editorial-card-image{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:12px;margin-bottom:16px}
