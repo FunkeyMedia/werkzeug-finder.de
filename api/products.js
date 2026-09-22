@@ -1,3 +1,4 @@
+import { amazonFetch as fetch, gatewayToken } from "./amazon-gateway.mjs";
 let accessToken;
 let tokenExpires = 0;
 const cache = new Map();
@@ -66,6 +67,8 @@ function trustedImage(value) {
 }
 
 async function getToken() {
+  const gateway = gatewayToken(); if (gateway) return gateway;
+
   if (accessToken && tokenExpires > Date.now()) return accessToken;
   const response = await fetch("https://api.amazon.co.uk/auth/o2/token", {
     method: "POST",
