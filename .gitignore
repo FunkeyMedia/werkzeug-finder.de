@@ -1,1 +1,7 @@
 .vercel
+dist/
+seo-validation.json
+.env.local
+
+.vercel
+.env*

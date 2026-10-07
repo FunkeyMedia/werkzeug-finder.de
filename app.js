@@ -1,3 +1,5 @@
+import { articleContent } from '/article-content.js';
+import { renderArticle, pageInfo, schemaGraph } from '/article-renderer.js';
 const TAG = "Onlinestarkei-21";
 document.head.insertAdjacentHTML(
   "beforeend",
@@ -124,17 +126,15 @@ let products = [
   brand: x[1],
   name: x[2],
   cat: x[3],
-  use: ["Elektro", "Sanitär", "Garten", "Holz", "Möbelmontage", "Werkstatt"][
-    i % 6
-  ],
-  price: x[5],
+  use: x[4],
+  price: "Preis bei Amazon prüfen",
   img: x[6],
 }));
 const topics = [
   [
     "werkzeugkoffer-grundausstattung",
     "Der erste Werkzeugkoffer: Was wirklich hineinmuss",
-    "Mit 15 gut gewählten Werkzeugen erledigst du die meisten Arbeiten in der Wohnung. Wir zeigen eine belastbare Grundausstattung.",
+    "Werkzeuge für Möbelmontage und kleine Reparaturen auswählen: passende Profile, Größen und sinnvolle Ergänzungen statt hoher Teilezahlen.",
     "Wohnung",
   ],
   [
@@ -146,7 +146,7 @@ const topics = [
   [
     "akkuschrauber-kaufen",
     "Akkuschrauber kaufen: Volt, Drehmoment, Akku",
-    "Welche Leistungsdaten zählen – und wann ein kompakter 12-Volt-Schrauber die bessere Wahl ist.",
+    "Schraubaufgabe, Bohrmaterial, Gewicht und Akkusystem gemeinsam vergleichen, statt nur Volt und Drehmoment zu betrachten.",
     "Elektro",
   ],
   [
@@ -256,7 +256,7 @@ const topics = [
   title: x[1],
   intro: x[2],
   tag: x[3],
-  time: 6 + (i % 5),
+  time: Math.max(1, Math.ceil((JSON.stringify(articleContent[x[0].normalize("NFD").replace(/[\u0300-\u036f]/g, "")]) || "").split(/\s+/).length / 200)),
 }));
 let fav = new Set(JSON.parse(localStorage.getItem("wf-favs") || "[]")),
   shown = 500,
@@ -291,9 +291,9 @@ function saveFav() {
 function productUsps(p) {
   let count = (p.name.match(/(\d+)-teilig/) || [])[1];
   return [
-    count ? `${count}-teilig` : "Bewährte Markenqualität",
+    count ? `${count}-teilig laut Produktbezeichnung` : p.brand,
     p.cat,
-    `Ideal für ${p.use}`,
+    `Kategorie: ${p.use}`,
   ];
 }
 function productCard(p) {
@@ -305,10 +305,10 @@ function productCard(p) {
     .map((x) => `<li>${esc(x)}</li>`)
     .join(
       "",
-    )}</ul><label class="compareChoice"><input type="checkbox" data-compare="${p.asin}" ${compare.has(p.asin) ? "checked" : ""}> Vergleichen</label><div class="shopPurchase"><span class="priceLabel">Aktueller Amazon-Preis</span><div class="price">${p.price}</div><div class="shopActions"><a class="shopBuy" target="_blank" rel="nofollow sponsored noopener" href="${url}"><span>Preis bei Amazon prüfen*</span><b>→</b></a><button class="heart ${fav.has(p.asin) ? "on" : ""}" data-fav="${p.asin}" aria-label="${esc(p.name)} merken">♥</button></div></div></div></article>`;
+    )}</ul><label class="compareChoice"><input type="checkbox" data-compare="${p.asin}" ${compare.has(p.asin) ? "checked" : ""}> Vergleichen</label><div class="shopPurchase"><span class="priceLabel">${amazonPool.length ? "Aktueller Amazon-Preis" : "Preis beim Händler prüfen"}</span><div class="price">${p.price}</div><div class="shopActions"><a class="shopBuy" target="_blank" rel="nofollow sponsored noopener" href="${url}"><span>Preis bei Amazon prüfen*</span><b>→</b></a><button class="heart ${fav.has(p.asin) ? "on" : ""}" data-fav="${p.asin}" aria-label="${esc(p.name)} merken">♥</button></div></div></div></article>`;
 }
 const inspirationTiles = [
-  { image: "/assets/editorial/werkzeug-mietwohnung-regal-montieren.jpg", eyebrow: "Erste Wohnung", title: "Sicher montieren, ohne unnötig viel Werkzeug.", link: "/ratgeber/werkzeug-fuer-mietwohnung" },
+  { image: "/assets/editorial/werkzeug-mietwohnung-regal-montieren.jpg", eyebrow: "Erste Wohnung", title: "Montage in der Mietwohnung planen.", link: "/ratgeber/werkzeug-fuer-mietwohnung" },
   { image: "/assets/editorial/werkzeug-garten-hochbeet-bauen.jpg", eyebrow: "Projekt Garten", title: "Mit der richtigen Auswahl wird aus einer Idee ein Wochenende-Projekt.", link: "/ratgeber/gartenwerkzeug-grundausstattung" },
   { image: "/assets/editorial/werkzeug-werkstatt-organisieren.jpg", eyebrow: "Eigene Werkstatt", title: "Gutes Arbeiten beginnt mit einem Platz, an dem alles griffbereit ist.", link: "/ratgeber/werkstatt-einrichten" },
 ];
@@ -345,7 +345,7 @@ function workshopRecommendations() {
 }
 function recommendationProductSection(selected, title, intro) {
   if (!selected.length) return "";
-  return `<section class="articleProducts"><p class="eyebrow">Passend zur Checkliste</p><h2>${title}</h2><p>${intro} Preise und Bilder werden aktuell von Amazon geladen.</p><div class="articleProductGrid">${selected.map((product) => {
+  return `<section class="articleProducts"><p class="eyebrow">Passend zur Checkliste</p><h2>${title}</h2><p>${intro} Aktuelle Händlerdaten werden bei Nutzung geladen. Prüfe Preis und Verfügbarkeit beim Händler.</p><div class="articleProductGrid">${selected.map((product) => {
     const url = product.url || `https://www.amazon.de/dp/${product.asin}/ref=nosim?tag=${TAG}`;
     return `<article class="articleProduct"><a href="${url}" target="_blank" rel="nofollow sponsored noopener"><img src="${product.img}" alt="${esc(product.name)}" loading="lazy"><span>${esc(product.brand)} · ${product.cat}</span><h3>${esc(product.name)}</h3><ul>${productUsps(product).map((usp) => `<li>${esc(usp)}</li>`).join("")}</ul><strong>${product.price}</strong><b class="articleProductCta">Bei Amazon ansehen* →</b></a></article>`;
   }).join("")}</div><small>* Werbelink. Preis und Verfügbarkeit können sich bei Amazon ändern.</small></section>`;
@@ -359,8 +359,8 @@ function workshopProductSection() {
 }
 function home() {
   document.title = "Werkzeug Finder – Das richtige Werkzeug für dein Projekt";
-  return `<section class="hero"><div class="heroCopy"><span class="eyebrow">Klar auswählen. Besser arbeiten.</span><h1>Mach’s richtig. Von Anfang an.</h1><p>Ob Akkuschrauber, Bohrmaschine, Säge, Gartengerät oder Werkstattausstattung: Finde genau das Werkzeug, das zu deinem Projekt und deinem Können passt.</p><div class="actions"><a class="button accent" href="#finder">Werkzeug finden</a><a class="button ghost" style="color:white" href="#ratgeber">Erst informieren</a></div><div class="stats"><div class="stat"><b id="productStat">500</b>Produkte direkt sichtbar</div><div class="stat"><b>20</b>Ratgeber</div><div class="stat"><b>0</b>erfundene Bewertungen</div></div></div><div class="heroImage"><span class="caption">Eigene KI-Illustration · keine Produktabbildung</span></div></section>
-<section class="section" id="finder"><span class="eyebrow">Dein Werkzeug-Finder</span><h2>Was möchtest du anpacken?</h2><div class="finderPanel"><div class="needs">${["Alle", "Wohnung", "Haus", "Garten", "Werkstatt"].map((x) => `<button class="chip ${x === active ? "active" : ""}" data-use="${x}">${x}</button>`).join("")}</div><div class="chips" style="margin-top:12px">${["Alle Produkte", "Koffer", "Elektro"].map((x) => `<button class="chip" data-cat="${x}">${x}</button>`).join("")}</div><div class="toolbar"><input id="search" type="search" placeholder="Werkzeug, Gerät oder Marke suchen" aria-label="Produkte durchsuchen"><select id="brand"><option value="">Alle Marken</option>${[...new Set(products.map((p) => p.brand))].map((x) => `<option>${x}</option>`).join("")}</select><select id="sort"><option value="rec">Empfehlung</option><option value="low">Preis aufsteigend</option><option value="high">Preis absteigend</option></select></div><div class="notice" id="amazonStatus"><b>Amazon wird verbunden:</b> Alle verfügbaren Produkte werden mit Bildern und Preisen geladen.</div><div id="resultCount" class="meta"></div><div class="productGrid" id="produkte"></div><button class="load" id="loadMore" hidden>Weitere Produkte laden</button></div></section>
+  return `<section class="hero"><div class="heroCopy"><span class="eyebrow">Klar auswählen. Besser arbeiten.</span><h1>Das richtige Werkzeug für dein Projekt.</h1><p>Ob Akkuschrauber, Bohrmaschine, Säge, Gartengerät oder Werkstattausstattung: Finde genau das Werkzeug, das zu deinem Projekt und deinem Können passt.</p><div class="actions"><a class="button accent" href="#finder">Werkzeug finden</a><a class="button ghost" style="color:white" href="#ratgeber">Erst informieren</a></div><div class="stats"><div class="stat"><b id="productStat">${products.length}</b>Produkte in der Auswahl</div><div class="stat"><b>20</b>Ratgeber</div><div class="stat"><b>0</b>erfundene Bewertungen</div></div></div><div class="heroImage"><span class="caption">Eigene KI-Illustration · keine Produktabbildung</span></div></section>
+<section class="section" id="finder"><span class="eyebrow">Dein Werkzeug-Finder</span><h2>Was möchtest du anpacken?</h2><div class="finderPanel"><div class="needs">${["Alle", "Wohnung", "Haus", "Garten", "Werkstatt"].map((x) => `<button class="chip ${x === active ? "active" : ""}" data-use="${x}">${x}</button>`).join("")}</div><div class="chips" style="margin-top:12px">${["Alle Produkte", "Koffer", "Elektro"].map((x) => `<button class="chip" data-cat="${x}">${x}</button>`).join("")}</div><div class="toolbar"><input id="search" type="search" placeholder="Werkzeug, Gerät oder Marke suchen" aria-label="Produkte durchsuchen"><select id="brand"><option value="">Alle Marken</option>${[...new Set(products.map((p) => p.brand))].map((x) => `<option>${x}</option>`).join("")}</select><select id="sort"><option value="rec">Empfehlung</option><option value="low">Preis aufsteigend</option><option value="high">Preis absteigend</option></select></div><div class="notice" id="amazonStatus"><b>Amazon wird verbunden:</b> Aktuelle Händlerdaten werden bei Nutzung geladen. Preise und Verfügbarkeit bitte beim Händler prüfen.</div><div id="resultCount" class="meta"></div><div class="productGrid" id="produkte"></div><button class="load" id="loadMore" hidden>Weitere Produkte laden</button></div></section>
 <section class="section" id="beratung"><span class="eyebrow">Kaufberatung ohne Fachchinesisch</span><h2>Erst verstehen. Dann kaufen.</h2><div class="productGrid"><div class="editorial"><span class="meta">Erste Werkstatt</span><h3>Ein guter Arbeitsplatz spart mehr Nerven als das hundertste Spezialwerkzeug.</h3><a href="/ratgeber/werkstatt-einrichten">Werkstatt planen →</a></div><article class="articleCard"><div class="num">01</div><h3>Wohnung</h3><p>Für Möbel, Bilder und kleine Reparaturen kompakt starten.</p><a href="/ratgeber/werkzeug-fuer-mietwohnung">Zur Checkliste →</a></article><article class="articleCard"><div class="num">02</div><h3>Haus</h3><p>Solide Grundausstattung, die mit den Aufgaben wachsen kann.</p><a href="/ratgeber/werkzeug-fuer-haus">Hausausstattung planen →</a></article><article class="articleCard"><div class="num">03</div><h3>Garten</h3><p>Werkzeug nach Fläche, Pflanzen und Lagerplatz auswählen.</p><a href="/ratgeber/gartenwerkzeug-grundausstattung">Garten-Guide öffnen →</a></article></div></section>
 <section class="section" id="ratgeber"><span class="eyebrow">Werkzeug-Wissen</span><h2>20 Ratgeber für bessere Projekte.</h2><div class="articleGrid">${topics.map((a, i) => `<article class="articleCard"><img class="editorial-card-image" src="${editorialImage(a).src}" alt="${editorialImage(a).alt}" width="1672" height="941" loading="lazy"><div class="num">${String(i + 1).padStart(2, "0")}</div><span class="meta">${a.tag} · ${a.time} Min.</span><h3>${a.title}</h3><p>${a.intro}</p><a href="/ratgeber/${a.slug}">Ratgeber lesen →</a></article>`).join("")}</div></section>
 <section class="section legal" id="transparenz"><span class="eyebrow">Transparenz</span><h2>So empfehlen wir.</h2><p>Werkzeug Finder bewertet keine Produkte aus eigener Praxiserfahrung, wenn kein dokumentierter Test vorliegt. Produkte, Originalbilder, Preise und Verfügbarkeit werden serverseitig über die Amazon Creators API abgerufen. Farbvarianten werden anhand ASIN, Eltern-ASIN und Modellbezeichnung zusammengeführt. Affiliate-Links enthalten ausschließlich die Partner-ID <b>${TAG}</b>.</p></section>`;
@@ -383,12 +383,12 @@ function article(a) {
     : a.slug === "werkstatt-einrichten"
       ? workshopProductSection()
       : "";
-  return `<article class="articlePage"><a href="/#ratgeber">← Alle Ratgeber</a><p class="eyebrow">${a.tag} · ${a.time} Minuten Lesezeit</p><h1>${a.title}</h1><p style="font-size:1.25rem">${a.intro}</p>${editorialFigure(a)}<h2>Worum es bei der Auswahl wirklich geht</h2><p>Das passende Werkzeug ist nicht automatisch das größte oder teuerste. Entscheidend sind Material, Häufigkeit der Nutzung, verfügbarer Platz und die Präzision, die dein Projekt verlangt. Für gelegentliche Arbeiten lohnt sich ein kompaktes, solides Set. Wer regelmäßig arbeitet, ergänzt gezielt und achtet auf Ergonomie, Ersatzteile und ein einheitliches Akkusystem.</p><h2>Ein praktisches Beispiel</h2><p>Angenommen, du möchtest ein Regal montieren: Prüfe zuerst die Wand, bestimme Bohrer und Dübel, miss zweimal und markiere sauber. Lege Schutzbrille, Leitungssucher, Wasserwaage, Bohrmaschine, passenden Bit und Staubsauger bereit. Diese Vorbereitung verhindert die häufigsten Schäden – lange bevor Kraft oder Maschinenleistung wichtig werden.</p><h2>So gehst du Schritt für Schritt vor</h2><p><b>1. Aufgabe eingrenzen:</b> Was soll bearbeitet, verbunden oder gemessen werden? <b>2. Untergrund prüfen:</b> Holz, Metall, Mauerwerk und Gipskarton brauchen unterschiedliche Lösungen. <b>3. Werkzeug passend dimensionieren:</b> Arbeitsbereich und Zubehör müssen zusammenpassen. <b>4. Sicher arbeiten:</b> Anleitung lesen, Arbeitsbereich freihalten und Schutz passend zur Gefahr wählen.</p><div class="checklist"><h2>Checkliste</h2><ul><li>Material und Abmessungen geprüft</li><li>Passendes Werkzeug und Zubehör bereitgelegt</li><li>Strom-, Wasser- oder Gasleitungen ausgeschlossen</li><li>Schutzbrille und erforderlicher Gehörschutz vorhanden</li><li>Werkstück sicher fixiert</li><li>Ergebnis vor dem finalen Schritt kontrolliert</li></ul></div>${recommendations}<h2>Häufige Fehler vermeiden</h2><p>Viele Probleme entstehen durch falsche Größe, stumpfes Zubehör oder zu viel Kraft. Stoppe, wenn ein Werkzeug verkantet, ungewöhnlich heiß wird oder der Untergrund unerwartet reagiert. Im Zweifel ist eine kurze Materialprobe an einer unauffälligen Stelle sinnvoller als ein riskanter Versuch.</p><h2>Quellen und weiterführende Hinweise</h2><p>Für sicherheitsrelevante Arbeiten gelten die Anleitung des Herstellers, die Hinweise der Deutschen Gesetzlichen Unfallversicherung und bei Elektroinstallationen die Regeln des zuständigen Fachhandwerks. Arbeiten an festen Elektro-, Gas- oder Wasserinstallationen gehören je nach Umfang in Fachhände.</p><div class="related">${related.map((x) => `<a class="articleCard" href="/ratgeber/${x.slug}"><span class="meta">Weiterlesen</span><h3>${x.title}</h3><p>${x.intro}</p></a>`).join("")}</div></article>`;
+  return renderArticle(a, articleContent[a.slug], editorialFigure(a), recommendations, related);
 }
 function legal(kind) {
   if (kind === "Impressum")
-    return `<section class="section legal"><span class="eyebrow">Werkzeug Finder · Stand: 12. September 2026</span><h2>Impressum</h2><h3>Anbieter gemäß § 5 DDG</h3><p>marktSTARK®<br>Inhaber: Pascal Weyers<br>Birkenwaldstraße 46<br>63179 Obertshausen<br>Deutschland</p><h3>Postanschrift</h3><p>marktSTARK®<br>Pestalozzistraße 5a<br>63538 Großkrotzenburg<br>Deutschland</p><h3>Kontakt</h3><p>E-Mail: <a href="mailto:weyers@markt-stark.de">weyers@markt-stark.de</a></p><h3>Umsatzsteuer</h3><p>Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG: DE299749508</p><h3>Redaktionelle Verantwortung</h3><p>Verantwortlich gemäß § 18 Abs. 2 MStV: Pascal Weyers, Birkenwaldstraße 46, 63179 Obertshausen.</p><h3>Verbraucherschlichtung</h3><p>Eine Teilnahme an Verfahren vor einer Verbraucherschlichtungsstelle erfolgt nicht; eine Verpflichtung hierzu besteht nicht.</p><h3>Über dieses Angebot</h3><p>Werkzeug Finder ist ein redaktioneller Produktfinder und kein Onlineshop. Vertragspartner für einen Kauf ist der jeweilige Händler. Als Amazon-Partner verdienen wir an qualifizierten Verkäufen. Preise und Verfügbarkeit können sich ändern; entscheidend ist das Angebot beim Händler zum Kaufzeitpunkt.</p><h3>Inhalte, Links und Bildmaterial</h3><p>Unsere Auswahl und Beratung ersetzen keine fachliche Prüfung des konkreten Projekts. Wir führen keine eigenen Produkttests durch und vergeben keine Testnoten. Fehlerhinweise nehmen wir über die oben genannte Kontaktadresse entgegen.</p><p>Für verlinkte Angebote sind deren Betreiber zuständig. Hinweise auf rechtswidrige Inhalte prüfen wir und entfernen betroffene Verweise erforderlichenfalls. Gesetzliche Pflichten bleiben bestehen.</p><p>Redaktionelle KI-Motive sind gekennzeichnet und zeigen keine authentischen Produkte der genannten Marken. Produktbilder stammen von Amazon-Bildservern. Rechte an Marken und fremden Bildern verbleiben bei den jeweiligen Rechteinhabern. Für unsere eigenen Texte und Gestaltungen gelten die gesetzlichen urheberrechtlichen Regelungen.</p><p><a href="/datenschutz"><b>Zur Datenschutzerklärung →</b></a></p></section>`;
-  return `<section class="section legal"><span class="eyebrow">Werkzeug Finder · Stand: 12. September 2026</span><h2>Datenschutzerklärung</h2><h3>1. Verantwortlicher und Kontakt</h3><p>Pascal Weyers, marktSTARK®<br>Birkenwaldstraße 46, 63179 Obertshausen, Deutschland<br>E-Mail: <a href="mailto:weyers@markt-stark.de">weyers@markt-stark.de</a></p><p>Postanschrift: marktSTARK®, Pestalozzistraße 5a, 63538 Großkrotzenburg, Deutschland.</p><h3>2. Bereitstellung und Hosting</h3><p>Werkzeug Finder wird über Vercel Inc., USA, bereitgestellt. Beim Abruf von Seiten, Bildern und Dateien fallen insbesondere IP-Adresse, Abrufzeit, angefragte Adresse, HTTP-Status sowie Browser- und Verbindungsinformationen an. Diese Daten dienen der Auslieferung, Fehlerdiagnose und Abwehr missbräuchlicher Zugriffe. Rechtsgrundlage ist Art. 6 Abs. 1 Buchst. f DSGVO; unser Interesse ist ein funktionsfähiges und sicheres Informationsangebot.</p><p>Technische Protokolle werden nach den Speicher- und Sicherheitsregeln des Hostingdienstes vorgehalten und gelöscht, sobald ihr Betriebs- oder Sicherheitszweck entfällt. Sicherheitsvorfälle und gesetzliche Pflichten können eine längere Aufbewahrung erfordern. Die Anwendung legt keine eigene Besucherdatenbank an.</p><p>Vercel nutzt internationale Infrastruktur; eine Verarbeitung in den USA ist möglich. Angaben zu den Übermittlungsgrundlagen findest du in der <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener">Datenschutzerklärung von Vercel</a>.</p><h3>3. Suche und Filter</h3><p>Suchbegriff, Einsatz-, Kategorie-, Marken- und Sortierfilter werden ausschließlich im Browser verarbeitet. Es gibt kein Benutzerkonto. Suchtexte werden nicht als Profil an Amazon übermittelt.</p><h3>4. Merkliste</h3><p>Die Merkliste speichert Amazon-Produktkennungen unter „wf-favs“ im Local Storage deines Browsers. Sie bleiben bis zum Entfernen der Einträge oder Löschen der Website-Daten erhalten. Eine Synchronisierung mit einem Benutzerkonto findet nicht statt.</p><p>Die Speicherung dient ausschließlich der von dir angeforderten Merkfunktion (§ 25 Abs. 2 Nr. 2 TDDDG). Soweit personenbezogene Daten betroffen sind, erfolgt die Verarbeitung auf Grundlage von Art. 6 Abs. 1 Buchst. f DSGVO zur Bereitstellung dieser Funktion. Du kannst die Einträge über die Merkliste oder die Website-Daten in den Browsereinstellungen löschen.</p><h3>5. Amazon-Produktbilder und Partnerlinks</h3><p>Produktfotos werden direkt von Amazon-Bildservern geladen. Dabei erhält Amazon bereits beim Anzeigen eines Bildes deine IP-Adresse und technische Abrufdaten, gegebenenfalls auch die Herkunftswebsite gemäß der Referrer-Einstellung des Browsers. Dies geschieht nicht erst beim Anklicken eines Kaufverweises. Unser berechtigtes Interesse gemäß Art. 6 Abs. 1 Buchst. f DSGVO ist die verständliche Darstellung der tatsächlich angebotenen Produkte.</p><p>Kaufverweise enthalten die Partnerkennung „${TAG}“. Beim Öffnen gelangst du zu Amazon, wo Amazon die weitere Verarbeitung einschließlich etwaiger Cookies nach eigenen Informationen und deinen Einstellungen verantwortet. Werkzeug Finder erhält keine Zahlungs- oder Lieferdaten über diese Website. Der Zweck der Partnerverweise ist die Finanzierung des kostenlosen Finders; Rechtsgrundlage ist Art. 6 Abs. 1 Buchst. f DSGVO. Weitere Informationen findest du in den <a href="https://www.amazon.de/gp/help/customer/display.html?nodeId=GX7NJQ4ZB8MHFRNJ" target="_blank" rel="noopener">Datenschutzhinweisen von Amazon</a>.</p><h3>6. Eigene Medien und Analysewerkzeuge</h3><p>Das gekennzeichnete redaktionelle KI-Bild wird über dieselbe Website ausgeliefert. Es sind keine YouTube-Player, Social-Media-Widgets, externen Webfonts oder Analyse- und Marketing-Skripte eingebunden. Die Website verwendet Systemschriften und setzt keine Analyse- oder Werbecookies. Sicherheitsfunktionen des Hostings bleiben hiervon unberührt.</p><h3>7. Kontakt per E-Mail</h3><p>Bei einer Nachricht verarbeiten wir deine E-Mail-Adresse, freiwillige Angaben und den Nachrichteninhalt zur Bearbeitung deines Anliegens. Bei vertragsbezogenen Anfragen gilt Art. 6 Abs. 1 Buchst. b DSGVO, ansonsten unser berechtigtes Interesse an der Beantwortung gemäß Buchst. f. Nach Abschluss und Wegfall weiterer Aufbewahrungszwecke löschen wir die Korrespondenz; gesetzlich aufbewahrungspflichtige Unterlagen bleiben für die vorgeschriebene Frist gespeichert.</p><h3>8. Deine Datenschutzrechte</h3><p>Nach den gesetzlichen Voraussetzungen kannst du Auskunft, Berichtigung, Löschung, Einschränkung und Datenübertragbarkeit verlangen. Gegen Verarbeitungen aufgrund berechtigter Interessen kannst du aus Gründen deiner besonderen Situation Widerspruch einlegen. Eine etwaige Einwilligung kannst du für die Zukunft widerrufen. Kontaktiere uns dazu über die oben genannte E-Mail-Adresse.</p><p>Du kannst dich bei einer Datenschutzaufsichtsbehörde beschweren, insbesondere an deinem Aufenthaltsort, Arbeitsplatz oder am Ort des vermuteten Verstoßes. Für Hessen: Der Hessische Beauftragte für Datenschutz und Informationsfreiheit, Wilhelmstraße 7, 65185 Wiesbaden.</p><p>Die Nutzung des Finders erfordert keine Angabe von Namen oder Kontaktdaten. Ohne technisch notwendige Verbindungsdaten kann die Website nicht ausgeliefert werden. Die Anwendung trifft keine automatisierten Entscheidungen mit rechtlicher oder vergleichbar erheblicher Wirkung.</p><h3>9. Änderungen</h3><p>Diese Erklärung beschreibt den aktuellen Funktionsumfang von Werkzeug Finder. Bei Änderungen an Diensten oder Datenverarbeitungen wird sie aktualisiert.</p><p><a href="/impressum"><b>Zum Impressum →</b></a></p></section>`;
+    return `<section class="section legal"><span class="eyebrow">Werkzeug Finder · Stand: 12. September 2026</span><h1>Impressum</h1><h3>Anbieter gemäß § 5 DDG</h3><p>marktSTARK®<br>Inhaber: Pascal Weyers<br>Birkenwaldstraße 46<br>63179 Obertshausen<br>Deutschland</p><h3>Postanschrift</h3><p>marktSTARK®<br>Pestalozzistraße 5a<br>63538 Großkrotzenburg<br>Deutschland</p><h3>Kontakt</h3><p>E-Mail: <a href="mailto:weyers@markt-stark.de">weyers@markt-stark.de</a></p><h3>Umsatzsteuer</h3><p>Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG: DE299749508</p><h3>Redaktionelle Verantwortung</h3><p>Verantwortlich gemäß § 18 Abs. 2 MStV: Pascal Weyers, Birkenwaldstraße 46, 63179 Obertshausen.</p><h3>Verbraucherschlichtung</h3><p>Eine Teilnahme an Verfahren vor einer Verbraucherschlichtungsstelle erfolgt nicht; eine Verpflichtung hierzu besteht nicht.</p><h3>Über dieses Angebot</h3><p>Werkzeug Finder ist ein redaktioneller Produktfinder und kein Onlineshop. Vertragspartner für einen Kauf ist der jeweilige Händler. Als Amazon-Partner verdienen wir an qualifizierten Verkäufen. Preise und Verfügbarkeit können sich ändern; entscheidend ist das Angebot beim Händler zum Kaufzeitpunkt.</p><h3>Inhalte, Links und Bildmaterial</h3><p>Unsere Auswahl und Beratung ersetzen keine fachliche Prüfung des konkreten Projekts. Wir führen keine eigenen Produkttests durch und vergeben keine Testnoten. Fehlerhinweise nehmen wir über die oben genannte Kontaktadresse entgegen.</p><p>Für verlinkte Angebote sind deren Betreiber zuständig. Hinweise auf rechtswidrige Inhalte prüfen wir und entfernen betroffene Verweise erforderlichenfalls. Gesetzliche Pflichten bleiben bestehen.</p><p>Redaktionelle KI-Motive sind gekennzeichnet und zeigen keine authentischen Produkte der genannten Marken. Produktbilder stammen von Amazon-Bildservern. Rechte an Marken und fremden Bildern verbleiben bei den jeweiligen Rechteinhabern. Für unsere eigenen Texte und Gestaltungen gelten die gesetzlichen urheberrechtlichen Regelungen.</p><p><a href="/datenschutz"><b>Zur Datenschutzerklärung →</b></a></p></section>`;
+  return `<section class="section legal"><span class="eyebrow">Werkzeug Finder · Stand: 12. September 2026</span><h1>Datenschutzerklärung</h1><h3>1. Verantwortlicher und Kontakt</h3><p>Pascal Weyers, marktSTARK®<br>Birkenwaldstraße 46, 63179 Obertshausen, Deutschland<br>E-Mail: <a href="mailto:weyers@markt-stark.de">weyers@markt-stark.de</a></p><p>Postanschrift: marktSTARK®, Pestalozzistraße 5a, 63538 Großkrotzenburg, Deutschland.</p><h3>2. Bereitstellung und Hosting</h3><p>Werkzeug Finder wird über Vercel Inc., USA, bereitgestellt. Beim Abruf von Seiten, Bildern und Dateien fallen insbesondere IP-Adresse, Abrufzeit, angefragte Adresse, HTTP-Status sowie Browser- und Verbindungsinformationen an. Diese Daten dienen der Auslieferung, Fehlerdiagnose und Abwehr missbräuchlicher Zugriffe. Rechtsgrundlage ist Art. 6 Abs. 1 Buchst. f DSGVO; unser Interesse ist ein funktionsfähiges und sicheres Informationsangebot.</p><p>Technische Protokolle werden nach den Speicher- und Sicherheitsregeln des Hostingdienstes vorgehalten und gelöscht, sobald ihr Betriebs- oder Sicherheitszweck entfällt. Sicherheitsvorfälle und gesetzliche Pflichten können eine längere Aufbewahrung erfordern. Die Anwendung legt keine eigene Besucherdatenbank an.</p><p>Vercel nutzt internationale Infrastruktur; eine Verarbeitung in den USA ist möglich. Angaben zu den Übermittlungsgrundlagen findest du in der <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener">Datenschutzerklärung von Vercel</a>.</p><h3>3. Suche und Filter</h3><p>Suchbegriff, Einsatz-, Kategorie-, Marken- und Sortierfilter werden ausschließlich im Browser verarbeitet. Es gibt kein Benutzerkonto. Suchtexte werden nicht als Profil an Amazon übermittelt.</p><h3>4. Merkliste</h3><p>Die Merkliste speichert Amazon-Produktkennungen unter „wf-favs“ im Local Storage deines Browsers. Sie bleiben bis zum Entfernen der Einträge oder Löschen der Website-Daten erhalten. Eine Synchronisierung mit einem Benutzerkonto findet nicht statt.</p><p>Die Speicherung dient ausschließlich der von dir angeforderten Merkfunktion (§ 25 Abs. 2 Nr. 2 TDDDG). Soweit personenbezogene Daten betroffen sind, erfolgt die Verarbeitung auf Grundlage von Art. 6 Abs. 1 Buchst. f DSGVO zur Bereitstellung dieser Funktion. Du kannst die Einträge über die Merkliste oder die Website-Daten in den Browsereinstellungen löschen.</p><h3>5. Amazon-Produktbilder und Partnerlinks</h3><p>Produktfotos werden direkt von Amazon-Bildservern geladen. Dabei erhält Amazon bereits beim Anzeigen eines Bildes deine IP-Adresse und technische Abrufdaten, gegebenenfalls auch die Herkunftswebsite gemäß der Referrer-Einstellung des Browsers. Dies geschieht nicht erst beim Anklicken eines Kaufverweises. Unser berechtigtes Interesse gemäß Art. 6 Abs. 1 Buchst. f DSGVO ist die verständliche Darstellung der tatsächlich angebotenen Produkte.</p><p>Kaufverweise enthalten die Partnerkennung „${TAG}“. Beim Öffnen gelangst du zu Amazon, wo Amazon die weitere Verarbeitung einschließlich etwaiger Cookies nach eigenen Informationen und deinen Einstellungen verantwortet. Werkzeug Finder erhält keine Zahlungs- oder Lieferdaten über diese Website. Der Zweck der Partnerverweise ist die Finanzierung des kostenlosen Finders; Rechtsgrundlage ist Art. 6 Abs. 1 Buchst. f DSGVO. Weitere Informationen findest du in den <a href="https://www.amazon.de/gp/help/customer/display.html?nodeId=GX7NJQ4ZB8MHFRNJ" target="_blank" rel="noopener">Datenschutzhinweisen von Amazon</a>.</p><h3>6. Eigene Medien und Analysewerkzeuge</h3><p>Das gekennzeichnete redaktionelle KI-Bild wird über dieselbe Website ausgeliefert. Es sind keine YouTube-Player, Social-Media-Widgets, externen Webfonts oder Analyse- und Marketing-Skripte eingebunden. Die Website verwendet Systemschriften und setzt keine Analyse- oder Werbecookies. Sicherheitsfunktionen des Hostings bleiben hiervon unberührt.</p><h3>7. Kontakt per E-Mail</h3><p>Bei einer Nachricht verarbeiten wir deine E-Mail-Adresse, freiwillige Angaben und den Nachrichteninhalt zur Bearbeitung deines Anliegens. Bei vertragsbezogenen Anfragen gilt Art. 6 Abs. 1 Buchst. b DSGVO, ansonsten unser berechtigtes Interesse an der Beantwortung gemäß Buchst. f. Nach Abschluss und Wegfall weiterer Aufbewahrungszwecke löschen wir die Korrespondenz; gesetzlich aufbewahrungspflichtige Unterlagen bleiben für die vorgeschriebene Frist gespeichert.</p><h3>8. Deine Datenschutzrechte</h3><p>Nach den gesetzlichen Voraussetzungen kannst du Auskunft, Berichtigung, Löschung, Einschränkung und Datenübertragbarkeit verlangen. Gegen Verarbeitungen aufgrund berechtigter Interessen kannst du aus Gründen deiner besonderen Situation Widerspruch einlegen. Eine etwaige Einwilligung kannst du für die Zukunft widerrufen. Kontaktiere uns dazu über die oben genannte E-Mail-Adresse.</p><p>Du kannst dich bei einer Datenschutzaufsichtsbehörde beschweren, insbesondere an deinem Aufenthaltsort, Arbeitsplatz oder am Ort des vermuteten Verstoßes. Für Hessen: Der Hessische Beauftragte für Datenschutz und Informationsfreiheit, Wilhelmstraße 7, 65185 Wiesbaden.</p><p>Die Nutzung des Finders erfordert keine Angabe von Namen oder Kontaktdaten. Ohne technisch notwendige Verbindungsdaten kann die Website nicht ausgeliefert werden. Die Anwendung trifft keine automatisierten Entscheidungen mit rechtlicher oder vergleichbar erheblicher Wirkung.</p><h3>9. Änderungen</h3><p>Diese Erklärung beschreibt den aktuellen Funktionsumfang von Werkzeug Finder. Bei Änderungen an Diensten oder Datenverarbeitungen wird sie aktualisiert.</p><p><a href="/impressum"><b>Zum Impressum →</b></a></p></section>`;
 }
 function finderExtras() {
   if (!$("#finder")) return;
@@ -531,7 +531,7 @@ async function loadAmazonProducts(target = 500) {
       const grid = $("#produkte");
       if (grid) grid.innerHTML = productFeed(products);
       const count = $("#resultCount");
-      if (count) count.textContent = `${products.length} geprüfte Modelle`;
+      if (count) count.textContent = `${products.length} Produkte`;
     }
     if (!amazonPool.length) throw new Error("Keine verfügbaren Angebote");
     products = amazonPool.slice(0, 500);
@@ -545,7 +545,7 @@ async function loadAmazonProducts(target = 500) {
     let status = $("#amazonStatus");
     if (status)
       status.innerHTML =
-        "<b>Hinweis:</b> Amazon war vorübergehend nicht erreichbar. Deshalb wird die geprüfte Basisauswahl angezeigt; die Live-Daten werden beim nächsten Aufruf erneut geladen.";
+        "<b>Hinweis:</b> Amazon war vorübergehend nicht erreichbar. Deshalb wird die vorhandene Basisauswahl ohne aktuelle Preise angezeigt; die Live-Daten werden beim nächsten Aufruf erneut geladen.";
   }
 }
 function updateAmazonStatus() {
@@ -567,7 +567,13 @@ function updateAmazonStatus() {
   }
 }
 function render() {
-  let path = decodeURI(location.pathname);
+  let path = decodeURI(location.pathname).replace(/\/$/, "") || "/";
+  const info = pageInfo(path, topics);
+  document.title = info.title;
+  document.querySelector('meta[name="description"]').content = info.description;
+  document.querySelector('link[rel="canonical"]').href = info.canonical;
+  document.querySelector('meta[name="robots"]').content = info.noindex ? "noindex,follow" : "index,follow";
+  document.querySelector('#page-schema').textContent = JSON.stringify(schemaGraph(path, topics, articleContent));
   let a = path.startsWith("/ratgeber/")
     ? topics.find((x) => "/ratgeber/" + x.slug === path)
     : null;
@@ -577,7 +583,8 @@ function render() {
       ? legal("Impressum")
       : path === "/datenschutz"
         ? legal("Datenschutz")
-        : home();
+        : path === "/" ? home() : '<section class="section"><h1>Seite nicht gefunden</h1><p>Diese Adresse ist nicht vorhanden.</p><a href="/">Zum Werkzeug Finder</a></section>';
+  document.title = info.title;
   finderExtras();
   bind();
   bindCompare();
@@ -605,7 +612,7 @@ function bind() {
             parseFloat(b.price.replace(",", "."))) *
           (sort === "low" ? 1 : -1),
       );
-    $("#resultCount").textContent = `${arr.length} geprüfte Modelle`;
+    $("#resultCount").textContent = `${arr.length} Produkte`;
     $("#produkte").innerHTML =
       productFeed(arr.slice(0, shown)) +
       (arr.length === 0 ? "<p>Keine passenden Produkte gefunden.</p>" : "");
@@ -681,7 +688,8 @@ document.addEventListener("click", (e) => {
     render();
     updateAmazonStatus();
     if (a.hash)
-      setTimeout(() => document.querySelector(a.hash)?.scrollIntoView(), 0);
+      setTimeout(() => document.getElementById(decodeURIComponent(a.hash.slice(1)))?.scrollIntoView(), 0);
+    loadForPage();
   }
 });
 addEventListener("popstate", () => {
@@ -690,4 +698,10 @@ addEventListener("popstate", () => {
 });
 render();
 updateAmazonStatus();
-loadAmazonProducts();
+loadForPage();
+
+function loadForPage() {
+ const path=location.pathname.replace(/\/$/, "") || "/";
+ if(path==="/") loadAmazonProducts();
+ else if(["/ratgeber/werkzeugkoffer-grundausstattung","/ratgeber/werkstatt-einrichten"].includes(path)) loadAmazonProducts(12);
+}

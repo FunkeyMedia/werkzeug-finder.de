@@ -1,0 +1,20 @@
+export const base = 'https://werkzeugberater.de';
+export const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export function renderArticle(a,data,figure,recommendations,related) {
+ const e=escapeHtml;
+ return `<article class="articlePage"><nav aria-label="Brotkrumennavigation"><a href="/">Werkzeug Finder</a> / <a href="/#ratgeber">Ratgeber</a></nav><p class="eyebrow">${e(a.tag)} · ${a.time} ${a.time===1?'Minute':'Minuten'} Lesezeit</p><h1>${e(a.title)}</h1><p style="font-size:1.25rem">${e(a.intro)}</p>${figure}<p>Redaktion: Werkzeug Finder, marktSTARK · Überarbeitet am 07.10.2026</p><nav class="article-toc" aria-label="Inhaltsverzeichnis">${data.sections.map(([h],i)=>`<a href="#abschnitt-${i+1}">${e(h)}</a>`).join('')}<a href="#checkliste">Checkliste</a><a href="#fragen">Fragen und Antworten</a></nav>${data.sections.map(([h,p],i)=>`<section id="abschnitt-${i+1}"><h2>${e(h)}</h2><p>${e(p)}</p></section>`).join('')}<section class="checklist" id="checkliste"><h2>Deine Checkliste</h2><ul>${data.checklist.map(t=>`<li>${e(t)}</li>`).join('')}</ul></section><section id="fragen"><h2>Fragen und Antworten</h2>${data.faq.map(([q,a])=>`<details><summary>${e(q)}</summary><p>${e(a)}</p></details>`).join('')}</section>${recommendations}${data.sources?.length?`<section><h2>Quellen und Vertiefung</h2><ul>${data.sources.map(([n,u])=>`<li><a href="${e(u)}" target="_blank" rel="noopener">${e(n)} ↗</a></li>`).join('')}</ul></section>`:''}<p>Diese redaktionelle Auswahlhilfe ersetzt keine Anleitung des konkreten Geräts oder fachliche Einweisung. Wir führen keine eigenen Produkttests durch und vergeben keine Testnoten.</p><div class="related">${related.map(x=>`<a class="articleCard" href="/ratgeber/${x.slug}/"><span class="meta">Weiterlesen</span><h3>${e(x.title)}</h3><p>${e(x.intro)}</p></a>`).join('')}</div></article>`;
+}
+export function pageInfo(path,topics) {
+ const clean=path.replace(/\/$/,'')||'/',a=topics.find(x=>clean==='/ratgeber/'+x.slug);
+ const legal=['/impressum','/datenschutz'].includes(clean);
+ const title=a?a.title+' | Werkzeug Finder':clean==='/'?'Werkzeug Finder: Auswahlhilfe für Haus und Werkstatt':legal?(clean==='/impressum'?'Impressum':'Datenschutz')+' | Werkzeug Finder':'Seite nicht gefunden | Werkzeug Finder';
+ const description=a?a.intro:clean==='/'?'Werkzeug nach Aufgabe auswählen: 20 konkrete Ratgeber, Checklisten und ein Produktfinder mit aktuellen Händlerdaten bei Nutzung. Keine erfundenen Tests.':legal?'Anbieterinformationen von Werkzeug Finder.':'Diese Adresse ist nicht vorhanden. Besuche den Finder oder die Ratgeber.';
+ return {title,description,canonical:base+(clean==='/'?'/':clean+'/'),article:a,noindex:legal||(!a&&clean!=='/')};
+}
+export function schemaGraph(path,topics,content) {
+ const info=pageInfo(path,topics),provider={'@type':'Organization','@id':base+'/#anbieter',name:'Werkzeug Finder',legalName:'marktSTARK, Pascal Weyers',url:base+'/',email:'weyers@markt-stark.de',address:{'@type':'PostalAddress',streetAddress:'Birkenwaldstraße 46',postalCode:'63179',addressLocality:'Obertshausen',addressCountry:'DE'}};
+ const graph=[provider];
+ if(info.article){const a=info.article;graph.push({'@type':'Article',headline:a.title,description:a.intro,dateModified:'2026-10-07',mainEntityOfPage:info.canonical,author:{'@id':provider['@id']},publisher:{'@id':provider['@id']}},{'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Werkzeug Finder',item:base+'/'},{'@type':'ListItem',position:2,name:a.title,item:info.canonical}]},{'@type':'FAQPage',mainEntity:content[a.slug].faq.map(([q,a])=>({'@type':'Question',name:q,acceptedAnswer:{'@type':'Answer',text:a}}))});}
+ else if(!info.noindex)graph.push({'@type':'WebSite',name:'Werkzeug Finder',url:base+'/',publisher:{'@id':provider['@id']}},{'@type':'ItemList',itemListElement:topics.map((a,i)=>({'@type':'ListItem',position:i+1,name:a.title,url:base+'/ratgeber/'+a.slug+'/'}))});
+ return {'@context':'https://schema.org','@graph':graph};
+}
