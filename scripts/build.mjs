@@ -1,0 +1,30 @@
+import {readFile,writeFile,mkdir,cp} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import vm from 'node:vm';
+import {renderArticle,pageInfo,schemaGraph,escapeHtml,base} from './article-renderer.js';
+const root=resolve(import.meta.dirname,'..'),out=resolve(root,'dist');
+const articleContent=JSON.parse(await readFile(resolve(root,'content/articles.json'),'utf8'));
+await mkdir(out,{recursive:true});
+for(const name of ['app.js','styles.css','cards.css','enhancements.css','product-content.css','assets','robots.txt'])await cp(resolve(root,name),resolve(out,name),{recursive:true});
+await cp(resolve(root,'scripts/article-renderer.js'),resolve(out,'article-renderer.js'));
+await writeFile(resolve(out,'article-content.js'),'export const articleContent='+JSON.stringify(articleContent)+';\n');
+const dummy={innerHTML:'',textContent:'',content:'',href:'',style:{},dataset:{},insertAdjacentHTML(){},setAttribute(){},addEventListener(){},classList:{toggle(){}},hidden:false};
+const main={innerHTML:''};
+const context=vm.createContext({articleContent,renderArticle,pageInfo,schemaGraph,JSON,Set,Map,Math,URL,location:{pathname:'/',origin:base},document:{head:dummy,title:'',querySelector:s=>s==='#main'?main:dummy,querySelectorAll:()=>[],addEventListener(){}},sessionStorage:{getItem:()=>null},localStorage:{getItem:()=>null,setItem(){}},addEventListener(){},scrollTo(){}});
+let source=await readFile(resolve(root,'app.js'),'utf8');
+source=source.replace(/^import .*;\r?\n/gm,'').replace(/render\(\);\s*updateAmazonStatus\(\);\s*loadForPage\(\);/,'');
+vm.runInContext(source,context);
+vm.runInContext('finderExtras=()=>{};bind=()=>{};bindCompare=()=>{};saveFav=()=>{};',context);
+const topics=vm.runInContext('topics',context);
+if(topics.length!==20||Object.keys(articleContent).length!==20)throw Error('Expected 20 guides');
+const paras=Object.values(articleContent).flatMap(a=>a.sections.map(s=>s[1]));
+if(new Set(paras).size!==paras.length)throw Error('Repeated editorial paragraphs');
+const template=await readFile(resolve(root,'index.html'),'utf8');
+const paths=['/',...topics.map(a=>'/ratgeber/'+a.slug+'/')];
+for(const path of [...paths,'/impressum/','/datenschutz/','/404']){
+ context.location.pathname=path;vm.runInContext('render()',context);
+ const info=pageInfo(path,topics);let html=template.replace(/<title>.*?<\/title>/s,`<title>${escapeHtml(info.title)}</title>`).replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?\s*>/s,`<meta name="description" content="${escapeHtml(info.description)}">`).replace(/<link rel="canonical" href="[^"]*"\s*\/?\s*>/,`<link rel="canonical" href="${info.canonical}">`).replace('<main id="main"></main>',`<main id="main">${main.innerHTML}</main>`).replace('<meta name="robots" content="index,follow">',`<meta name="robots" content="${info.noindex?'noindex,follow':'index,follow'}">`).replace('<script id="page-schema" type="application/ld+json">{}</script>',`<script id="page-schema" type="application/ld+json">${JSON.stringify(schemaGraph(path,topics,articleContent)).replaceAll('<','\\u003c')}</script>`).replace('</head>',`<meta property="og:title" content="${escapeHtml(info.title)}"><meta property="og:description" content="${escapeHtml(info.description)}"><meta property="og:url" content="${info.canonical}"><meta property="og:type" content="${info.article?'article':'website'}"></head>`);
+ const target=resolve(out,path==='/'?'index.html':path==='/404'?'404.html':path.slice(1)+'index.html');await mkdir(resolve(target,'..'),{recursive:true});await writeFile(target,html);
+}
+await writeFile(resolve(out,'sitemap.xml'),`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths.map(p=>`<url><loc>${base+p}</loc>${p==='/'?'':'<lastmod>2026-10-07</lastmod>'}</url>`).join('')}</urlset>`);
+console.log('Built 21 preferred pages, 20 distinct guides and 2 legal pages.');

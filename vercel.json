@@ -1,1 +1,1 @@
-{"functions":{"api/products.js":{"maxDuration":30}},"cleanUrls":true}
+{"buildCommand":"node scripts/build.mjs","outputDirectory":"dist","functions":{"api/products.js":{"maxDuration":30}},"cleanUrls":true,"trailingSlash":true}
