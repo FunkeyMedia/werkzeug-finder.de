@@ -97,7 +97,7 @@ function normalize(item, search) {
   const features = (item.itemInfo?.features?.displayValues || []).filter(v => typeof v === "string").slice(0, 3);
   const images = [item.images?.primary?.large?.url, ...(item.images?.variants || []).map(image => image.large?.url)]
     .map(trustedImage).filter(Boolean);
-  const partnerTag = "Onlinestarkei-21";
+  const partnerTag = "onlinestarkei-21";
   return {
     asin: item.asin,
     parentAsin: item.parentASIN || null,
@@ -126,7 +126,7 @@ async function searchPage(searchIndex, itemPage) {
     headers: { Authorization: `Bearer ${await getToken()}`, "Content-Type": "application/json", "x-marketplace": "www.amazon.de" },
     body: JSON.stringify({
       keywords: search.keywords, itemCount: 10, itemPage,
-      marketplace: "www.amazon.de", partnerTag: (process.env.AMAZON_PARTNER_TAG || "Onlinestarkei-21").toLowerCase(), condition: "New",
+      marketplace: "www.amazon.de", partnerTag: (process.env.AMAZON_PARTNER_TAG || "onlinestarkei-21").toLowerCase(), condition: "New",
       resources: ["images.primary.large", "images.variants.large", "itemInfo.title", "itemInfo.byLineInfo", "itemInfo.features", "offersV2.listings.price", "offersV2.listings.availability", "parentASIN"]
     }),
     signal: AbortSignal.timeout(15000)
