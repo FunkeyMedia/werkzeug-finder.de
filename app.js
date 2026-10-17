@@ -1,6 +1,6 @@
 import { articleContent } from '/article-content.js';
 import { renderArticle, pageInfo, schemaGraph } from '/article-renderer.js';
-const TAG = "onlinestarkei-21";
+const TAG = "fkm-werkzeugberater-21";
 document.head.insertAdjacentHTML(
   "beforeend",
   '<link rel="stylesheet" href="/enhancements.css"><link rel="stylesheet" href="/product-content.css">',
